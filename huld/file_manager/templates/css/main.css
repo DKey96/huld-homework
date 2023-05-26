@@ -1,4 +1,4 @@
-.test {
+.main {
     display: flex;
     flex-flow: column wrap;
     justify-content: center;
@@ -7,6 +7,14 @@
     height: 100vh;
 }
 
-.test h1 {
-    color: "green"
+.main h1 {
+    font-family: 'Roboto', sans-serif;
+}
+
+.main button {
+    width: 20vw;
+    height: 10vh;
+    border-radius: 10px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1em;
 }

@@ -5,11 +5,14 @@
 <head>
     <title>Filesystem Manager</title>
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="test">
+<div class="main">
     <h1>Pro spuštění přenosu souborů stiskněte tlačítko níže</h1>
-    <form action="transfer" method="post" enctype="multipart/form-data">
+    <form action="transfer/" method="post" enctype="multipart/form-data">{% csrf_token %}
         <button type="submit" name="send_button" value="">
             Odeslat soubory
         </button>
