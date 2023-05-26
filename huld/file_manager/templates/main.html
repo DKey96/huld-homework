@@ -1,0 +1,19 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Filesystem Manager</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+</head>
+<body>
+<div class="test">
+    <h1>Pro spuštění přenosu souborů stiskněte tlačítko níže</h1>
+    <form action="transfer" method="post" enctype="multipart/form-data">
+        <button type="submit" name="send_button" value="">
+            Odeslat soubory
+        </button>
+    </form>
+</div>
+</body>
+</html>
