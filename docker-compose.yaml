@@ -1,0 +1,43 @@
+# Run `docker-compose build` to build an image for api and workers containers.
+# Run `docker-compose up` to run all containers.
+version: "3.4"
+services:
+  api:
+    build:
+      context: ./  # Adjust the context path if necessary
+      dockerfile: Dockerfile
+    restart: on-failure
+    container_name: huld-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./huld:/app
+    environment:
+      - HULD_FILES_FOLDER_PATH=./test
+      - HULD_FILE_RECEIVE_URL=https://localhost:8000/test
+      - POSTGRES_NAME=huld
+      - POSTGRES_USER=huld
+      - POSTGRES_PASSWORD=huld
+    networks:
+      - djangonetwork
+    depends_on:
+      - db
+  db:
+    image: postgres:12
+    container_name: db
+    environment:
+      - POSTGRES_NAME=huld
+      - POSTGRES_USER=huld
+      - POSTGRES_PASSWORD=huld
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - djangonetwork
+volumes:
+  postgres_data:
+
+networks:
+      djangonetwork:
+          driver: bridge
