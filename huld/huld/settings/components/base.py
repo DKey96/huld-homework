@@ -49,6 +49,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "huld.urls"
@@ -119,8 +120,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "../file_manager/templates"),
+    os.path.join(BASE_DIR, "../file_manager/templates/"),
 ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -131,3 +133,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 FILES_FOLDER_PATH = os.environ.get("HULD_FILES_FOLDER_PATH", BASE_DIR / "test")
 FILE_RECEIVE_URL = os.environ.get("HULD_FILE_RECEIVE_URL")
 SEND_FILES_BULK = False
+
+# Whitenoise for taking care about the static files
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
