@@ -21,6 +21,9 @@ log = logging.getLogger(__name__)
 class TransferView(viewsets.GenericViewSet):
     """View for handling the transfer of the files to the external service via HTTPS"""
 
+    def get_serializer_class(self):
+        return UploadSerializer
+
     def create(self, request, *args, **kwargs) -> Response:
         if settings.SEND_FILES_BULK:
             response = self._send_files_bulk()
@@ -110,31 +113,33 @@ class TransferView(viewsets.GenericViewSet):
 
         files_to_be_sent = []
         created_files = []
+        files_to_be_closed = []
         for file_name in files:
             file_path = os.path.join(folder_path, file_name)
 
             if os.path.isfile(file_path):
-                with open(file_path, "rb") as file:
-                    files_md5 = md5(file.read()).hexdigest()
-                    files_number = os.stat(file_path, follow_symlinks=False).st_ino
-                    try:
-                        _ = File.objects.get(
-                            Q(md5_hash=files_md5) | Q(file_number=files_number)
-                        )
-                    except File.DoesNotExist:
-                        file_model = File.objects.create(
-                            name=file_name,
-                            md5_hash=files_md5,
-                            path=file.name,
-                            file_number=files_number,
-                        )
-                        files_to_be_sent.append(("files", (file_name, file)))
-                        created_files.append(file_model)
-                    else:
-                        log.info(
-                            "File with name %s was already sent once or is a duplicate. Skipping...",
-                            file_name,
-                        )
+                file = open(file_path, "rb")
+                files_to_be_closed.append(file)
+                files_md5 = md5(file.read()).hexdigest()
+                files_number = os.stat(file_path, follow_symlinks=False).st_ino
+                try:
+                    _ = File.objects.get(
+                        Q(md5_hash=files_md5) | Q(file_number=files_number)
+                    )
+                except File.DoesNotExist:
+                    file_model = File.objects.create(
+                        name=file_name,
+                        md5_hash=files_md5,
+                        path=file.name,
+                        file_number=files_number,
+                    )
+                    files_to_be_sent.append(("files", (file_name, file)))
+                    created_files.append(file_model)
+                else:
+                    log.info(
+                        "File with name %s was already sent once or is a duplicate. Skipping...",
+                        file_name,
+                    )
         if files_to_be_sent:
             try:
                 response = requests.post(
@@ -163,6 +168,8 @@ class TransferView(viewsets.GenericViewSet):
                     file.delete()
 
                 return Response(status=status.HTTP_424_FAILED_DEPENDENCY)
+            for file in files_to_be_closed:
+                file.close()
         return Response(status=status.HTTP_200_OK)
 
     @action(
@@ -187,6 +194,5 @@ class TransferView(viewsets.GenericViewSet):
 
         with open(file_path, "wb+") as destination:
             for chunk in validated_file.chunks():
-                print(chunk)
                 destination.write(chunk)
         return Response(status=204)

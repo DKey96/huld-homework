@@ -3,7 +3,7 @@ from django.db import models
 
 class File(models.Model):
     name = models.CharField(max_length=255)
-    path = models.FilePathField()
+    path = models.FilePathField(max_length=255)
     md5_hash = models.CharField()
     file_number = models.IntegerField()
 
