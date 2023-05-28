@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 from unittest import mock
 from unittest.mock import MagicMock
@@ -242,3 +243,28 @@ class TransferViewTestCase(TestCase):
                     log_mock.records[-1].getMessage(),
                 )
                 self.assertEqual(File.objects.count(), 0)
+
+
+class UploadViewTestCase(TestCase):
+    def test_upload_file(self):
+        file_content = b"Test data"
+        url = reverse("transfer-upload")
+        non_existing_folder = "./doesnt-exist"
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(file_content)
+            temp_file_name = os.path.basename(temp_file.name)
+
+        with override_settings(FILES_FOLDER_PATH=non_existing_folder):
+            response = self.client.post(url, {"file": open(temp_file.name, "rb")})
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        file_path = os.path.join(non_existing_folder, temp_file_name)
+        self.assertTrue(os.path.exists(file_path))
+
+        with open(file_path, "rb") as saved_file:
+            saved_content = saved_file.read()
+            self.assertEqual(saved_content, file_content)
+
+        shutil.rmtree(non_existing_folder)

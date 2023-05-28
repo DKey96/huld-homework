@@ -2,19 +2,23 @@ import logging
 import os
 import time
 from hashlib import md5
+from pathlib import Path
 
 import requests
 from django.conf import settings
 from django.db.models import Q
 from file_manager.models import File
+from file_manager.serializers.upload import UploadSerializer
 
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 
 log = logging.getLogger(__name__)
 
 
-class TransferView(viewsets.ViewSet):
+class TransferView(viewsets.GenericViewSet):
     """View for handling the transfer of the files to the external service via HTTPS"""
 
     def create(self, request, *args, **kwargs) -> Response:
@@ -160,3 +164,29 @@ class TransferView(viewsets.ViewSet):
 
                 return Response(status=status.HTTP_424_FAILED_DEPENDENCY)
         return Response(status=status.HTTP_200_OK)
+
+    @action(
+        methods=["post"],
+        detail=False,
+        name="upload",
+        parser_class=FileUploadParser,
+    )
+    def upload(self, request, *args, **kwargs) -> Response:
+        """Enables user to upload a file over the API. Meant to be used for testing of the functionality"""
+        file = request.FILES.get("file")
+
+        serializer = UploadSerializer(data={"file": file})
+        serializer.is_valid(raise_exception=True)
+        validated_file = serializer.validated_data.get("file")
+        filename = validated_file.name
+
+        file_path = os.path.join(settings.FILES_FOLDER_PATH, filename)
+        if not os.path.exists(settings.FILES_FOLDER_PATH):
+            path = Path(settings.FILES_FOLDER_PATH)
+            path.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path, "wb+") as destination:
+            for chunk in validated_file.chunks():
+                print(chunk)
+                destination.write(chunk)
+        return Response(status=204)
